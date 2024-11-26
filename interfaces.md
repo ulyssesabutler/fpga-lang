@@ -51,13 +51,13 @@ endmodule
 
 ### Interface Expressions
 
-There are a few different an interface can be expressed
+There are a few different ways an interface can be expressed
 ```text
 InterfaceExpression ::=   WireInterfaceExpression()
                         | DefinedInterfaceExpression(
                             identifier,
                             GenericInterfaceParameterValueList,
-                            GenericValueParameterValueList,
+                            InterfaceGenericValueParameterValueList,
                           )
                         | VectorInterfaceExpressions(
                             InterfaceExpression,
@@ -70,13 +70,14 @@ The `wire` interface is the only one defined by the language itself.
 Everything else builds on top of it.
 
 Defined interfaces represent the more complex, composite interfaces that are defined either by the user or a library.
-These interfaces can be defined generically, with parameters representing other interfaces and static values.
+These interfaces can be defined generically.
 To express that interface, the user will need to provide values for those generic parameters.
 
 Vector interfaces are uniform arrays of a fixed size, where every element is the same interface.
 
 Finally, an interface expression might just be an identifier for a generic interface parameter.
-For example, an interface definition might take a interface parameter `T`.
+For example, an interface definition might take an interface parameter `T`.
+This identifier can then be used anywhere an interface expression would be used.
 
 ### Defined Interfaces
 
@@ -92,13 +93,13 @@ The two types of interface definitions available to users are
 InterfaceDefinition ::=   AliasInterfaceDefinition(
                             identifier,
                             GenericInterfaceParameterList,
-                            GenericValueParameterList,
+                            InterfaceGenericValueParameterList,
                             InterfaceExpression
                           )
                         | RecordInterfaceDefinition(
                             identifier,
                             GenericInterfaceParameterList,
-                            GenericValueParameterList,
+                            InterfaceGenericValueParameterList,
                             RecordInterfaceInheritList,
                             RecordInterfacePortList
                           )
@@ -160,14 +161,17 @@ interface data_metabyte(parameter data_size: integer): data_byte(data_size, 8)
 AliasInterface ::= AliasInterfaceDefinition(
                      identifier,
                      GenericInterfaceParameterList,
-                     GenericValueParameterList,
+                     InterfaceGenericValueParameterList,
                      InterfaceExpression
                    )
                    
 GenericInterfaceParameterList ::= [identifier[,...]]
 
-GenericValueParameterList ::= [GenericValueParameter(identifier, StaticExpressionTypeIdentifier)[,...]]
+InterfaceGenericValueParameterList ::= [InterfaceGenericValueParameter(identifier, StaticSizeExpressionTypeIdentifier)[,...]]
 ```
+
+_**NOTE**_: For now, we'll limit the `StaticSizeExpressionTypeIdentifier` to just `integer`, to represent vector sizes.
+I can't really think of any other use case for interface parameters at the moment.
 
 #### Concrete Syntax
 
@@ -202,7 +206,7 @@ To define a record interface, in addition to the standard generic parameters (wh
 RecordInterface ::= RecordInterfaceDefinition(
                       identifier,
                       GenericInterfaceParameterList,
-                      GenericValueParameterList,
+                      InterfaceGenericValueParameterList,
                       RecordInterfaceInheritList,
                       RecordInterfacePortList
                     )
