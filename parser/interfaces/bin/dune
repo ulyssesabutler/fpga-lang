@@ -1,0 +1,11 @@
+(executable
+ (public_name interfaces)
+ (name main)
+ (modules main parser lexer)
+ (libraries interfaces menhirLib))
+
+(menhir
+ (modules parser))
+
+(ocamllex
+ (modules lexer))
