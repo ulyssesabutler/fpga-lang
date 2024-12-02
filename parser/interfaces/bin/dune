@@ -1,8 +1,9 @@
 (executable
  (public_name interfaces)
  (name main)
- (modules main parser lexer)
- (libraries interfaces menhirLib))
+ (modules main parser lexer ast)
+ (libraries interfaces menhirLib)
+ (preprocess (pps ppx_deriving.show)))
 
 (menhir
  (modules parser))
