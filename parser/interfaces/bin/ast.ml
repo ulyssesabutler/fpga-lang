@@ -3,7 +3,21 @@
 type identifier = string
 [@@deriving show]
 
-type parameter_value = int
+type static_value_expression =
+  | Literal of int
+  | Variable of identifier
+  | Addition of static_value_expression * static_value_expression
+  | Subtraction of static_value_expression * static_value_expression
+  | Multiplication of static_value_expression * static_value_expression
+  | Division of static_value_expression * static_value_expression
+  | Equals of static_value_expression * static_value_expression
+  | NotEquals of static_value_expression * static_value_expression
+  | GreaterThan of static_value_expression * static_value_expression
+  | LessThan of static_value_expression * static_value_expression
+  | GreaterThanEquals of static_value_expression * static_value_expression
+  | LessThanEquals of static_value_expression * static_value_expression
+[@@deriving show]
+type parameter_value = static_value_expression
 [@@deriving show]
 type parameter_type = identifier (* TODO: Should these be reserved words? *)
 [@@deriving show]
@@ -13,7 +27,7 @@ type generic_interface_definition = identifier
 [@@deriving show]
 
 (* INTERFACE EXPRESSIONS *)
-type array_bounds_specifier = int
+type array_bounds_specifier = static_value_expression
 [@@deriving show]
 
 type interface_expression =

@@ -1,0 +1,16 @@
+interface test<T>(parameter size: integer)
+{
+  data: wire[16];
+}
+
+interface test2<T>(parameter size: integer): test<T>(size)
+{
+  metadata1: wire[16];
+  metadata2: wire[size];
+  sub: test<T>(size);
+}
+
+interface test4(parameter size: integer): test<T>(size) { metadata: wire; }
+
+interface test5() { data: wire[16]; }
+

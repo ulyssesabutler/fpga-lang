@@ -39,10 +39,13 @@ interface_definition:
 ;
 
 alias_interface_defition:
-    INTERFACE i=ID
-      ANGLE_L gidl=generic_interface_definition_list ANGLE_R
-      PARAN_L gpdl=generic_parameter_definition_list PARAN_R
-      alias=interface_expression { (i, gidl, gpdl, alias) }
+    | INTERFACE i=ID
+        ANGLE_L gidl=generic_interface_definition_list ANGLE_R
+        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        alias=interface_expression { (i, gidl, gpdl, alias) }
+    | INTERFACE i=ID
+        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        alias=interface_expression { (i, [], gpdl, alias) }
 ;
 
 record_interface_definition:
@@ -55,6 +58,13 @@ record_interface_definition:
         ANGLE_L gidl=generic_interface_definition_list ANGLE_R
         PARAN_L gpdl=generic_parameter_definition_list PARAN_R
         CURLY_L pdl=port_definition_list CURLY_R { (i, gidl, gpdl, [], pdl) }
+    | INTERFACE i=ID
+        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        COLON il=inherit_list
+        CURLY_L pdl=port_definition_list CURLY_R { (i, [], gpdl, il, pdl) }
+    | INTERFACE i=ID
+        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        CURLY_L pdl=port_definition_list CURLY_R { (i, [], gpdl, [], pdl) }
 ;
 
 (* Helpers for Interface Definitions *)
@@ -95,13 +105,15 @@ interface_expression:
     | WIRE { Wire }
     | declared_interface_expression { DeclaredInterface $1 }
     | vector_interface_expression { VectorInterface $1 }
-    | i=ID { GenericInterface (i) }
+    | i=ID { GenericInterface i }
 ;
 
 declared_interface_expression:
-    i=ID
-      ANGLE_L givl=generic_interface_value_list ANGLE_R
-      PARAN_L gpvl=generic_parameter_value_list PARAN_R { (i, givl, gpvl) }
+    | i=ID
+        ANGLE_L givl=generic_interface_value_list ANGLE_R
+        PARAN_L gpvl=generic_parameter_value_list PARAN_R { (i, givl, gpvl) }
+    | i=ID
+        PARAN_L gpvl=generic_parameter_value_list PARAN_R { (i, [], gpvl) }
 ;
 
 vector_interface_expression:
@@ -124,10 +136,15 @@ generic_parameter_value_list:
     | remainder=generic_parameter_value_list COMMA v=parameter_value COMMA { v :: remainder }
 ;
 
-parameter_value: (* TOOD: This should support static expressions *)
-    | v=INT_LITERAL { v }
+parameter_value:
+    v=static_value { v }
 ;
 
 array_bounds_specifier:
-    | v=INT_LITERAL { v }
+    v=static_value { v }
+;
+
+static_value: (**)
+    | v=INT_LITERAL { Literal v }
+    | i=ID          { Variable i }
 ;
