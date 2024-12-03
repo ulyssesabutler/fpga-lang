@@ -20,6 +20,18 @@
 %token COMMA
 %token EOF
 
+(* Operators *)
+%token ADD SUBTRACT
+%token MULTIPLY DIVIDE
+%token EQUALS NOT_EQUALS
+%token GREATER_THAN_EQUALS LESS_THAN_EQUALS
+
+(* Precedence *)
+%left ADD SUBTRACT
+%left MULTIPLY DIVIDE
+%left GREATER_THAN_EQUALS LESS_THAN_EQUALS ANGLE_L ANGLE_R
+%left EQUALS NOT_EQUALS
+
 %start main             /* the entry point */
 %type <Ast.program> main
 %%
@@ -145,6 +157,17 @@ array_bounds_specifier:
 ;
 
 static_value: (**)
-    | v=INT_LITERAL { Literal v }
-    | i=ID          { Variable i }
+    | v=INT_LITERAL                                 { Literal v }
+    | i=ID                                          { Variable i }
+    | PARAN_L static_value PARAN_R                  { $2 }
+    | static_value ADD static_value                 { Add ($1, $3) }
+    | static_value SUBTRACT static_value            { Subtract ($1, $3) }
+    | static_value MULTIPLY static_value            { Multiply ($1, $3) }
+    | static_value DIVIDE static_value              { Divide ($1, $3) }
+    | static_value EQUALS static_value              { Equals ($1, $3) }
+    | static_value NOT_EQUALS static_value          { NotEquals ($1, $3) }
+    | static_value ANGLE_L static_value             { LessThan ($1, $3) }
+    | static_value ANGLE_R static_value             { GreaterThan ($1, $3) }
+    | static_value LESS_THAN_EQUALS static_value    { LessThanEquals ($1, $3) }
+    | static_value GREATER_THAN_EQUALS static_value { GreaterThanEquals ($1, $3) }
 ;

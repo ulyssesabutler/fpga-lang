@@ -6,10 +6,10 @@ type identifier = string
 type static_value_expression =
   | Literal of int
   | Variable of identifier
-  | Addition of static_value_expression * static_value_expression
-  | Subtraction of static_value_expression * static_value_expression
-  | Multiplication of static_value_expression * static_value_expression
-  | Division of static_value_expression * static_value_expression
+  | Add of static_value_expression * static_value_expression
+  | Subtract of static_value_expression * static_value_expression
+  | Multiply of static_value_expression * static_value_expression
+  | Divide of static_value_expression * static_value_expression
   | Equals of static_value_expression * static_value_expression
   | NotEquals of static_value_expression * static_value_expression
   | GreaterThan of static_value_expression * static_value_expression

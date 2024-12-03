@@ -1,6 +1,6 @@
 interface test<T>(parameter size: integer)
 {
-  data: wire[16];
+  data: wire[16 * size];
 }
 
 interface test2<T>(parameter size: integer): test<T>(size)
@@ -14,3 +14,4 @@ interface test4(parameter size: integer): test<T>(size) { metadata: wire; }
 
 interface test5() { data: wire[16]; }
 
+interface test6() test5()[1 + 2 * 3 + 4]

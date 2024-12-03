@@ -18,6 +18,16 @@ rule token = parse
     | ':'            { COLON }
     | ';'            { SEMI_COLON }
     | ','            { COMMA }
+
+    | '+'            { ADD }
+    | '-'            { SUBTRACT }
+    | '*'            { MULTIPLY }
+    | '/'            { DIVIDE }
+    | "=="           { EQUALS }
+    | "!="           { NOT_EQUALS }
+    | ">="           { GREATER_THAN_EQUALS }
+    | "<="           { LESS_THAN_EQUALS }
+
     | ['0'-'9']+ as digits { INT_LITERAL (int_of_string digits) } (* TODO: Lots. Negative, different bases, etc. *)
     | ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']* as id { ID id }
     | eof            { EOF }
