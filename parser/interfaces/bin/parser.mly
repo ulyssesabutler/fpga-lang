@@ -51,47 +51,45 @@ interface_definition:
 ;
 
 alias_interface_defition:
-    | INTERFACE i=ID
-        ANGLE_L gidl=generic_interface_definition_list ANGLE_R
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
-        alias=interface_expression { (i, gidl, gpdl, alias) }
-    | INTERFACE i=ID
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
-        alias=interface_expression { (i, [], gpdl, alias) }
+    INTERFACE i=ID
+      gidl=generic_interface_definition_list
+      gpdl=generic_parameter_definition_list
+      alias=interface_expression { (i, gidl, gpdl, alias) }
 ;
 
 record_interface_definition:
       INTERFACE i=ID
-        ANGLE_L gidl=generic_interface_definition_list ANGLE_R
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        gidl=generic_interface_definition_list
+        gpdl=generic_parameter_definition_list
         COLON il=inherit_list
         CURLY_L pdl=port_definition_list CURLY_R { (i, gidl, gpdl, il, pdl) }
     | INTERFACE i=ID
-        ANGLE_L gidl=generic_interface_definition_list ANGLE_R
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
+        gidl=generic_interface_definition_list
+        gpdl=generic_parameter_definition_list
         CURLY_L pdl=port_definition_list CURLY_R { (i, gidl, gpdl, [], pdl) }
-    | INTERFACE i=ID
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
-        COLON il=inherit_list
-        CURLY_L pdl=port_definition_list CURLY_R { (i, [], gpdl, il, pdl) }
-    | INTERFACE i=ID
-        PARAN_L gpdl=generic_parameter_definition_list PARAN_R
-        CURLY_L pdl=port_definition_list CURLY_R { (i, [], gpdl, [], pdl) }
 ;
 
 (* Helpers for Interface Definitions *)
 generic_interface_definition_list:
-    | (* Empty *)                                                   { [] }
-    | i=ID                                                          { [i] }
-    | remainder=generic_interface_definition_list COMMA i=ID        { i :: remainder }
-    | remainder=generic_interface_definition_list COMMA i=ID COMMA  { i :: remainder }
+    | (* Empty *)                                                     { [] }
+    | ANGLE_L values=generic_interface_definition_list_values ANGLE_R { values }
+;
+
+generic_interface_definition_list_values:
+    | i=ID                                                                { [i] }
+    | remainder=generic_interface_definition_list_values COMMA i=ID       { i :: remainder }
+    | remainder=generic_interface_definition_list_values COMMA i=ID COMMA { i :: remainder }
 ;
 
 generic_parameter_definition_list:
-    | (* Empty *)                                                                               { [] }
-    | gpd=generic_parameter_definition                                                          { [gpd] }
-    | remainder=generic_parameter_definition_list COMMA gpd=generic_parameter_definition        { gpd :: remainder }
-    | remainder=generic_parameter_definition_list COMMA gpd=generic_parameter_definition COMMA  { gpd :: remainder }
+    | PARAN_L PARAN_R                                                 { [] }
+    | PARAN_L values=generic_parameter_definition_list_values PARAN_R { values }
+;
+
+generic_parameter_definition_list_values:
+    | gpd=generic_parameter_definition                                                                { [gpd] }
+    | remainder=generic_parameter_definition_list_values COMMA gpd=generic_parameter_definition       { gpd :: remainder }
+    | remainder=generic_parameter_definition_list_values COMMA gpd=generic_parameter_definition COMMA { gpd :: remainder }
 ;
 
 generic_parameter_definition:
