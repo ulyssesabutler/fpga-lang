@@ -7,7 +7,15 @@
 (* Keywords *)
 %token INTERFACE
 %token PARAMETER
-%token WIRE (* tmp: we should eventually remove this *)
+%token WIRE
+%token FUNCTION
+%token COMBINATIONAL
+%token SEQUENTIAL
+%token IF
+%token ELSE
+%token NULL
+%token TRUE
+%token FALSE
 
 (* Punctuation *)
 %token PARAN_L PARAN_R
@@ -21,16 +29,19 @@
 %token EOF
 
 (* Operators *)
+%token CONNECTOR
 %token ADD SUBTRACT
 %token MULTIPLY DIVIDE
 %token EQUALS NOT_EQUALS
 %token GREATER_THAN_EQUALS LESS_THAN_EQUALS
 
 (* Precedence *)
+%left CONNECTOR
 %left ADD SUBTRACT
 %left MULTIPLY DIVIDE
 %left GREATER_THAN_EQUALS LESS_THAN_EQUALS ANGLE_L ANGLE_R
 %left EQUALS NOT_EQUALS
+
 
 %start main             /* the entry point */
 %type <Ast.program> main
@@ -41,10 +52,15 @@ main:
 
 program:
     | (* Empty *) { [] }
-    | program interface_definition { $2 :: $1 }
+    | program definition { $2 :: $1 }
 ;
 
+definition:
+    | interface_definition { InterfaceDefinition $1 }
+    | function_definition  { FunctionDefinition $1 }
+
 (* Interface Definitions *)
+
 interface_definition:
     | alias_interface_defition { AliasInterface $1 }
     | record_interface_definition { RecordInterface $1 }
@@ -110,7 +126,9 @@ port_definition:
     i=ID COLON interface=interface_expression SEMI_COLON { (i, interface) }
 ;
 
+
 (* Interface Expressions *)
+
 interface_expression:
     | WIRE { Wire }
     | declared_interface_expression { DeclaredInterface $1 }
@@ -119,6 +137,10 @@ interface_expression:
 ;
 
 declared_interface_expression:
+    instantiation { $1 }
+;
+
+instantiation:
     | i=ID
         ANGLE_L givl=generic_interface_value_list ANGLE_R
         PARAN_L gpvl=generic_parameter_value_list PARAN_R { (i, givl, gpvl) }
@@ -154,7 +176,9 @@ array_bounds_specifier:
     v=static_value { v }
 ;
 
-static_value: (**)
+static_value:
+    | TRUE                                          { Literal 1 } (* TODO: Boolean static expressions *)
+    | FALSE                                         { Literal 0 }
     | v=INT_LITERAL                                 { Literal v }
     | i=ID                                          { Variable i }
     | PARAN_L static_value PARAN_R                  { $2 }
@@ -168,4 +192,95 @@ static_value: (**)
     | static_value ANGLE_R static_value             { GreaterThan ($1, $3) }
     | static_value LESS_THAN_EQUALS static_value    { LessThanEquals ($1, $3) }
     | static_value GREATER_THAN_EQUALS static_value { GreaterThanEquals ($1, $3) }
+;
+
+(* FUNCTION DEFINITIONS *)
+
+function_definition:
+    | t=function_type FUNCTION i=ID
+        gidl=generic_interface_definition_list
+        gpdl=generic_parameter_definition_list
+        inputs=function_io_list CONNECTOR outputs=function_io_list
+        CURLY_L body=circuit_statement_list CURLY_R { (i, t, gidl, gpdl, inputs, outputs, body) }
+;
+
+function_type:
+    | (* Empty *)   { DefaultFunction }
+    | SEQUENTIAL    { SequentialFunction }
+    | COMBINATIONAL { CombinationalFunction }
+
+function_io_type:
+    | (* Empty *)   { DefaultIO }
+    | SEQUENTIAL    { SequentialIO }
+    | COMBINATIONAL { CombinationalIO }
+
+function_io_list:
+    | NULL                      { [] }
+    | function_io_list_values   { $1 }
+;
+
+function_io_list_values:
+    | v=function_io_list_value                                               { [v] }
+    | remainder=function_io_list_values COMMA v=function_io_list_value       { v :: remainder }
+    | remainder=function_io_list_values COMMA v=function_io_list_value COMMA { v :: remainder }
+
+function_io_list_value:
+    t=function_io_type i=ID COLON interface=interface_expression { (i, t, interface) }
+;
+
+circuit_statement_list:
+    | (* Empty *) { [] }
+    | remainder=circuit_statement_list statement=circuit_statement { statement :: remainder }
+;
+
+circuit_statement:
+    | conditional_circuit_statement { Conditional $1 }
+    | circuit_expression SEMI_COLON { NonConditional $1 }
+;
+
+conditional_circuit_statement: (* TODO: This is a bit hacky. A better way to do this is probably to create the concept of a scope? *)
+    | IF PARAN_L condition=static_value PARAN_R if_body=if_body_circuit_statement_list                                               { (condition, if_body, []) }
+    | IF PARAN_L condition=static_value PARAN_R if_body=if_body_circuit_statement_list ELSE else_body=if_body_circuit_statement_list { (condition, if_body, else_body) }
+;
+
+if_body_circuit_statement_list:
+    | CURLY_L statements=circuit_statement_list CURLY_R { statements }
+    | statement=circuit_statement                       { [statement] }
+;
+
+circuit_expression:
+    | circuit_expression_node_definition { Definition $1 }
+    | circuit_expression_connection      { Connection $1 }
+;
+
+circuit_expression_node_definition:
+    i=ID COLON instantiation=instantiation { (i, instantiation) }
+;
+
+circuit_expression_node_expression:
+    | circuit_expression_node_definition { Definition $1 }
+    | i=ID                               { Expression i }
+;
+
+circuit_expression_node_expression_list:
+    | expression=circuit_expression_node_expression                                                               { [expression] }
+    | remainder=circuit_expression_node_expression_list COMMA expression=circuit_expression_node_expression       { expression :: remainder }
+    | remainder=circuit_expression_node_expression_list COMMA expression=circuit_expression_node_expression COMMA { expression :: remainder }
+
+circuit_expression_connection:
+    producer=circuit_expression_producer CONNECTOR consumer=circuit_expression_consumer { (producer, consumer) }
+;
+
+circuit_expression_producer:
+    | circuit_expression                              { ExpressionProducer $1 }
+    | circuit_expression_node_expression_list         { NodeListProducer $1 }
+    | circuit_expression_record_interface_constructor { InterfaceConstructorProducer $1 }
+;
+
+circuit_expression_consumer:
+    | circuit_expression_node_expression_list         { NodeListConsumer $1 }
+;
+
+circuit_expression_record_interface_constructor:
+    PARAN_L statements=circuit_statement_list PARAN_R { statements }
 ;

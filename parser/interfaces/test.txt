@@ -15,3 +15,55 @@ interface test4(parameter size: integer): test<T>(size) { metadata: wire; }
 interface test5() { data: wire[16]; }
 
 interface test6() test5()[1 + 2 * 3 + 4]
+
+function test7() input: test5() => output: test5() { }
+
+function test8() input1: test5(), input2: test5() => output: test5() { }
+
+function test9() input: test5() => output1: test5(), output2: test5() { }
+
+function test10() input: test5() => output: test5() { node1: test(); }
+
+function test11() input: test5() => output: test5()
+{
+  input => output;
+}
+
+function test12() input: test5() => output: test5()
+{
+  input => node => output;
+}
+
+function test13() input: test5() => output: test5()
+{
+  input => node: test() => output;
+}
+
+function test14() input: test5() => output: test5()
+{
+  node: test();
+  input, node => output;
+}
+
+function test15() input: test5() => output: test5()
+{
+  node: test();
+  input => output, node;
+}
+
+function test16() input: wire => output: wire
+{
+  if (0 == 1)
+    input => output;
+  else
+    input => node => output;
+}
+
+function test16() input: wire => output: wire
+{
+  if (0 < 1)
+  {
+    input => node;
+    node => output;
+  }
+}
