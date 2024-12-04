@@ -96,6 +96,7 @@ and circuit_statement =
 [@@deriving show]
 
 and circuit_expression_consumer =
+  | ExpressionConsumer of circuit_expression
   | NodeListConsumer of circuit_expression_node_list_expression
 [@@deriving show]
 and circuit_expression_producer =

@@ -249,6 +249,11 @@ if_body_circuit_statement_list:
 ;
 
 circuit_expression:
+    | expression=circuit_expression_value                 { expression }
+    | PARAN_L expression=circuit_expression_value PARAN_R { expression }
+;
+
+circuit_expression_value:
     | circuit_expression_node_definition { Definition $1 }
     | circuit_expression_connection      { Connection $1 }
 ;
@@ -278,9 +283,10 @@ circuit_expression_producer:
 ;
 
 circuit_expression_consumer:
+    | circuit_expression                              { ExpressionConsumer $1 }
     | circuit_expression_node_expression_list         { NodeListConsumer $1 }
 ;
 
 circuit_expression_record_interface_constructor:
-    PARAN_L statements=circuit_statement_list PARAN_R { statements }
+    CURLY_L statements=circuit_statement_list CURLY_R { statements }
 ;
