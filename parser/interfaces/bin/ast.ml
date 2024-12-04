@@ -78,37 +78,43 @@ type function_io = identifier * function_io_type * interface_expression
 [@@deriving show]
 
 (* Circuit Statements *)
-type circuit_expression_node_definition = identifier * instantiation
-[@@deriving show]
-and circuit_expression_node_expression =
-  | Definition of circuit_expression_node_definition
-  | Expression of identifier
-[@@deriving show]
-and circuit_expression_node_list_expression = circuit_expression_node_expression list
-[@@deriving show]
-and circuit_expression_record_interface_constructor = circuit_statement list
+type circuit_statement =
+  | ConditionalStatement of conditional_circuit_statement
+  | NonConditionalStatement of circuit_expression
 [@@deriving show]
 and conditional_circuit_statement = static_value_expression * circuit_statement list * circuit_statement list
 [@@deriving show]
-and circuit_statement =
-  | Conditional of conditional_circuit_statement
-  | NonConditional of circuit_expression
+
+and circuit_expression =
+  | ProducerExpression of circuit_producer_expression
+  | ConsumerExpression of circuit_consumer_expression
 [@@deriving show]
 
-and circuit_expression_consumer =
-  | ExpressionConsumer of circuit_expression
-  | NodeListConsumer of circuit_expression_node_list_expression
+and circuit_node_definition = identifier * instantiation
 [@@deriving show]
-and circuit_expression_producer =
-  | ExpressionProducer of circuit_expression
-  | NodeListProducer of circuit_expression_node_list_expression
-  | InterfaceConstructorProducer of circuit_expression_record_interface_constructor
+and circuit_node_expression =
+  | DefinitionExpression of circuit_node_definition
+  | ReferenceExpression of identifier
 [@@deriving show]
-and circuit_expression_connection = circuit_expression_producer * circuit_expression_consumer
+
+and circuit_interface_constructor_expression = circuit_statement list
 [@@deriving show]
-and circuit_expression =
-  | Definition of circuit_expression_node_definition
-  | Connection of circuit_expression_connection
+
+and circuit_producer_expression =
+  | ProducerConnectionExpression of circuit_producer_connection_expression
+  | ProducerGroupExpression of circuit_producer_expression list
+  | ProducerInterfaceConstructorExpression of circuit_interface_constructor_expression
+  | ProducerConsumerExpression of circuit_consumer_expression
+[@@deriving show]
+and circuit_consumer_expression =
+  | ConsumerNodeExpression of circuit_node_expression
+  | ConsumerConnectionExpression of circuit_consumer_connection_expression
+  | ConsumerGroupExpression of circuit_consumer_expression list
+[@@deriving show]
+
+and circuit_producer_connection_expression = circuit_producer_expression * circuit_consumer_expression
+[@@deriving show]
+and circuit_consumer_connection_expression = circuit_consumer_expression * circuit_consumer_expression
 [@@deriving show]
 
 (* TODO: Functions as parameters *)

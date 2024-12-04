@@ -75,3 +75,9 @@ function test18() input: wire => output: wire
     input => value2;
   } => output;
 }
+
+function test19() input: wire => output: wire
+{
+  (input => value1),
+  (input => value2) => output;
+}

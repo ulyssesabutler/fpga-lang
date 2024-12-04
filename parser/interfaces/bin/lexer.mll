@@ -26,6 +26,7 @@ rule token = parse
     | ':'             { COLON }
     | ';'             { SEMI_COLON }
     | ','             { COMMA }
+    | '.'             { DOT }
 
     | "=>"            { CONNECTOR }
     | '+'             { ADD }

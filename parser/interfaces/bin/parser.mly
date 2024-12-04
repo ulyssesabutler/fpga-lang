@@ -25,15 +25,16 @@
 
 %token COLON
 %token SEMI_COLON
-%token COMMA
 %token EOF
 
 (* Operators *)
-%token CONNECTOR
 %token ADD SUBTRACT
 %token MULTIPLY DIVIDE
 %token EQUALS NOT_EQUALS
 %token GREATER_THAN_EQUALS LESS_THAN_EQUALS
+%token CONNECTOR
+%token COMMA
+%token DOT
 
 (* Precedence *)
 %left CONNECTOR
@@ -234,8 +235,8 @@ circuit_statement_list:
 ;
 
 circuit_statement:
-    | conditional_circuit_statement { Conditional $1 }
-    | circuit_expression SEMI_COLON { NonConditional $1 }
+    | conditional_circuit_statement { ConditionalStatement $1 }
+    | circuit_expression SEMI_COLON { NonConditionalStatement $1 }
 ;
 
 conditional_circuit_statement: (* TODO: This is a bit hacky. A better way to do this is probably to create the concept of a scope? *)
@@ -249,44 +250,61 @@ if_body_circuit_statement_list:
 ;
 
 circuit_expression:
-    | expression=circuit_expression_value                 { expression }
-    | PARAN_L expression=circuit_expression_value PARAN_R { expression }
+    | circuit_producer_expression                 { ProducerExpression $1 }
+    | circuit_consumer_expression                 { ConsumerExpression $1 }
 ;
 
-circuit_expression_value:
-    | circuit_expression_node_definition { Definition $1 }
-    | circuit_expression_connection      { Connection $1 }
+circuit_producer_expression:
+    | v=circuit_producer_expression_value { v }
+    | PARAN_L v=circuit_producer_expression_value PARAN_R { v }
+;
+
+circuit_consumer_expression:
+    | v=circuit_consumer_expression_value { v }
+    | PARAN_L v=circuit_consumer_expression_value PARAN_R { v }
+;
+
+circuit_producer_expression_value:
+    | circuit_producer_connection_expression          { ProducerConnectionExpression $1 }
+    | circuit_producer_group_expression               { ProducerGroupExpression $1 }
+    | circuit_record_interface_constructor_expression { ProducerInterfaceConstructorExpression $1 }
+    | circuit_consumer_expression                     { ProducerConsumerExpression $1 }
+;
+
+circuit_consumer_expression_value:
+    | circuit_node_expression                { ConsumerNodeExpression $1 }
+    | circuit_consumer_connection_expression { ConsumerConnectionExpression $1 }
+    | circuit_consumer_group_expression      { ConsumerGroupExpression $1 }
+;
+
+circuit_producer_connection_expression:
+    p=circuit_producer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
+;
+
+circuit_consumer_connection_expression:
+    p=circuit_consumer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
+;
+
+circuit_producer_group_expression:
+    | second=circuit_producer_expression COMMA first=circuit_producer_expression { [second; first] }
+    | remainder=circuit_producer_group_expression COMMA expression=circuit_producer_expression { expression :: remainder }
+;
+
+circuit_consumer_group_expression:
+    | second=circuit_consumer_expression COMMA first=circuit_consumer_expression { [second; first] }
+    | remainder=circuit_consumer_group_expression COMMA expression=circuit_consumer_expression { expression :: remainder }
 ;
 
 circuit_expression_node_definition:
-    i=ID COLON instantiation=instantiation { (i, instantiation) }
+    i=ID COLON t=instantiation { (i, t) }
 ;
 
-circuit_expression_node_expression:
-    | circuit_expression_node_definition { Definition $1 }
-    | i=ID                               { Expression i }
+circuit_node_expression:
+    | circuit_expression_node_definition { DefinitionExpression $1 }
+    | ID                                 { ReferenceExpression $1 }
 ;
 
-circuit_expression_node_expression_list:
-    | expression=circuit_expression_node_expression                                                               { [expression] }
-    | remainder=circuit_expression_node_expression_list COMMA expression=circuit_expression_node_expression       { expression :: remainder }
-    | remainder=circuit_expression_node_expression_list COMMA expression=circuit_expression_node_expression COMMA { expression :: remainder }
-
-circuit_expression_connection:
-    producer=circuit_expression_producer CONNECTOR consumer=circuit_expression_consumer { (producer, consumer) }
-;
-
-circuit_expression_producer:
-    | circuit_expression                              { ExpressionProducer $1 }
-    | circuit_expression_node_expression_list         { NodeListProducer $1 }
-    | circuit_expression_record_interface_constructor { InterfaceConstructorProducer $1 }
-;
-
-circuit_expression_consumer:
-    | circuit_expression                              { ExpressionConsumer $1 }
-    | circuit_expression_node_expression_list         { NodeListConsumer $1 }
-;
-
-circuit_expression_record_interface_constructor:
+circuit_record_interface_constructor_expression:
     CURLY_L statements=circuit_statement_list CURLY_R { statements }
 ;
+
