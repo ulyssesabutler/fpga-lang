@@ -53,7 +53,7 @@ main:
 
 program:
     | (* Empty *) { [] }
-    | program definition { $2 :: $1 }
+    | definition program { $1 :: $2 }
 ;
 
 definition:
@@ -63,19 +63,19 @@ definition:
 (* Interface Definitions *)
 
 interface_definition:
-    | alias_interface_defition { AliasInterface $1 }
+    | alias_interface_defition    { AliasInterface $1 }
     | record_interface_definition { RecordInterface $1 }
 ;
 
 alias_interface_defition:
-    INTERFACE i=ID
-      gidl=generic_interface_definition_list
-      gpdl=generic_parameter_definition_list
-      alias=interface_expression { (i, gidl, gpdl, alias) }
+    | INTERFACE i=ID
+        gidl=generic_interface_definition_list
+        gpdl=generic_parameter_definition_list
+        alias=interface_expression { (i, gidl, gpdl, alias) }
 ;
 
 record_interface_definition:
-      INTERFACE i=ID
+    | INTERFACE i=ID
         gidl=generic_interface_definition_list
         gpdl=generic_parameter_definition_list
         COLON il=inherit_list
@@ -93,9 +93,8 @@ generic_interface_definition_list:
 ;
 
 generic_interface_definition_list_values:
-    | i=ID                                                                { [i] }
-    | remainder=generic_interface_definition_list_values COMMA i=ID       { i :: remainder }
-    | remainder=generic_interface_definition_list_values COMMA i=ID COMMA { i :: remainder }
+    | i=ID COMMA?                                                   { [i] }
+    | i=ID COMMA remainder=generic_interface_definition_list_values { i :: remainder }
 ;
 
 generic_parameter_definition_list:
@@ -104,9 +103,8 @@ generic_parameter_definition_list:
 ;
 
 generic_parameter_definition_list_values:
-    | gpd=generic_parameter_definition                                                                { [gpd] }
-    | remainder=generic_parameter_definition_list_values COMMA gpd=generic_parameter_definition       { gpd :: remainder }
-    | remainder=generic_parameter_definition_list_values COMMA gpd=generic_parameter_definition COMMA { gpd :: remainder }
+    | gpd=generic_parameter_definition COMMA?                                                   { [gpd] }
+    | gpd=generic_parameter_definition COMMA remainder=generic_parameter_definition_list_values { gpd :: remainder }
 ;
 
 generic_parameter_definition:
@@ -114,31 +112,31 @@ generic_parameter_definition:
 ;
 
 inherit_list:
-    | interface=declared_interface_expression                               { [interface] }
-    | remainder=inherit_list COMMA interface=declared_interface_expression  { interface :: remainder }
+    | interface=declared_interface_expression                              { [interface] }
+    | interface=declared_interface_expression COMMA remainder=inherit_list { interface :: remainder }
 ;
 
 port_definition_list:
     | (* Empty *)                                         { [] }
-    | remainder=port_definition_list port=port_definition { port :: remainder }
+    | port=port_definition remainder=port_definition_list { port :: remainder }
 ;
 
 port_definition:
-    i=ID COLON interface=interface_expression SEMI_COLON { (i, interface) }
+    | i=ID COLON interface=interface_expression SEMI_COLON { (i, interface) }
 ;
 
 
 (* Interface Expressions *)
 
 interface_expression:
-    | WIRE { Wire }
+    | WIRE                          { Wire }
     | declared_interface_expression { DeclaredInterface $1 }
-    | vector_interface_expression { VectorInterface $1 }
-    | i=ID { GenericInterface i }
+    | vector_interface_expression   { VectorInterface $1 }
+    | i=ID                          { GenericInterface i }
 ;
 
 declared_interface_expression:
-    instantiation { $1 }
+    | instantiation { $1 }
 ;
 
 instantiation:
@@ -150,31 +148,29 @@ instantiation:
 ;
 
 vector_interface_expression:
-    interface=interface_expression
-      SQUARE_L bounds=array_bounds_specifier SQUARE_R { (interface, bounds) }
+    | interface=interface_expression
+        SQUARE_L bounds=array_bounds_specifier SQUARE_R { (interface, bounds) }
 ;
 
 (* Helpers for Interface Expressions *)
 generic_interface_value_list:
-    | (* Empty *)                                                                       { [] }
-    | interface=interface_expression                                                    { [interface] }
-    | remainder=generic_interface_value_list COMMA interface=interface_expression       { interface :: remainder }
-    | remainder=generic_interface_value_list COMMA interface=interface_expression COMMA { interface :: remainder }
+    | (* Empty *)                                                                 { [] }
+    | interface=interface_expression                                              { [interface] }
+    | interface=interface_expression COMMA remainder=generic_interface_value_list { interface :: remainder }
 ;
 
 generic_parameter_value_list:
-    | (* Empty *)                                                          { [] }
-    | v=parameter_value                                                    { [v] }
-    | remainder=generic_parameter_value_list COMMA v=parameter_value       { v :: remainder }
-    | remainder=generic_parameter_value_list COMMA v=parameter_value COMMA { v :: remainder }
+    | (* Empty *)                                                    { [] }
+    | v=parameter_value                                              { [v] }
+    | v=parameter_value COMMA remainder=generic_parameter_value_list { v :: remainder }
 ;
 
 parameter_value:
-    v=static_value { v }
+    | v=static_value { v }
 ;
 
 array_bounds_specifier:
-    v=static_value { v }
+    | v=static_value { v }
 ;
 
 static_value:
@@ -221,17 +217,16 @@ function_io_list:
 ;
 
 function_io_list_values:
-    | v=function_io_list_value                                               { [v] }
-    | remainder=function_io_list_values COMMA v=function_io_list_value       { v :: remainder }
-    | remainder=function_io_list_values COMMA v=function_io_list_value COMMA { v :: remainder }
+    | v=function_io_list_value COMMA?                                  { [v] }
+    | v=function_io_list_value COMMA remainder=function_io_list_values { v :: remainder }
 
 function_io_list_value:
-    t=function_io_type i=ID COLON interface=interface_expression { (i, t, interface) }
+    | t=function_io_type i=ID COLON interface=interface_expression { (i, t, interface) }
 ;
 
 circuit_statement_list:
-    | (* Empty *) { [] }
-    | remainder=circuit_statement_list statement=circuit_statement { statement :: remainder }
+    | (* Empty *)                                                  { [] }
+    | statement=circuit_statement remainder=circuit_statement_list { statement :: remainder }
 ;
 
 circuit_statement:
@@ -250,17 +245,17 @@ if_body_circuit_statement_list:
 ;
 
 circuit_expression:
-    | circuit_producer_expression                 { ProducerExpression $1 }
-    | circuit_consumer_expression                 { ConsumerExpression $1 }
+    | circuit_producer_expression { ProducerExpression $1 }
+    | circuit_consumer_expression { ConsumerExpression $1 }
 ;
 
 circuit_producer_expression:
-    | v=circuit_producer_expression_value { v }
+    | v=circuit_producer_expression_value                 { v }
     | PARAN_L v=circuit_producer_expression_value PARAN_R { v }
 ;
 
 circuit_consumer_expression:
-    | v=circuit_consumer_expression_value { v }
+    | v=circuit_consumer_expression_value                 { v }
     | PARAN_L v=circuit_consumer_expression_value PARAN_R { v }
 ;
 
@@ -278,25 +273,25 @@ circuit_consumer_expression_value:
 ;
 
 circuit_producer_connection_expression:
-    p=circuit_producer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
+    | p=circuit_producer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
 ;
 
 circuit_consumer_connection_expression:
-    p=circuit_consumer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
+    | p=circuit_consumer_expression CONNECTOR c=circuit_consumer_expression { (p, c) }
 ;
 
 circuit_producer_group_expression:
-    | second=circuit_producer_expression COMMA first=circuit_producer_expression { [second; first] }
-    | remainder=circuit_producer_group_expression COMMA expression=circuit_producer_expression { expression :: remainder }
+    | first=circuit_producer_expression COMMA second=circuit_producer_expression COMMA?        { [first; second] }
+    | expression=circuit_producer_expression COMMA remainder=circuit_producer_group_expression { expression :: remainder }
 ;
 
 circuit_consumer_group_expression:
-    | second=circuit_consumer_expression COMMA first=circuit_consumer_expression { [second; first] }
-    | remainder=circuit_consumer_group_expression COMMA expression=circuit_consumer_expression { expression :: remainder }
+    | first=circuit_consumer_expression COMMA second=circuit_consumer_expression COMMA?        { [first; second] }
+    | expression=circuit_consumer_expression COMMA remainder=circuit_consumer_group_expression { expression :: remainder }
 ;
 
 circuit_expression_node_definition:
-    i=ID COLON t=instantiation { (i, t) }
+    | i=ID COLON t=instantiation { (i, t) }
 ;
 
 circuit_node_expression:
@@ -305,6 +300,6 @@ circuit_node_expression:
 ;
 
 circuit_record_interface_constructor_expression:
-    CURLY_L statements=circuit_statement_list CURLY_R { statements }
+    | CURLY_L statements=circuit_statement_list CURLY_R { statements }
 ;
 
